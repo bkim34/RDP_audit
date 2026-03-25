@@ -1,0 +1,3 @@
+HOSTNAME: gpua009.delta.ncsa.illinois.edu
+CUDA_VISIBLE_DEVICES: 0
+/u/bdkim4/.conda/envs/bb_audit_dpsgd/bin/python
