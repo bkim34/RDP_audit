@@ -1,0 +1,10 @@
+CIFAR-10 | max_grad_norm/0.1 | alpha=1.5
+========================================
+Bars show mean across seed blocks 5-9, 10-14, 15-19, and 20-24.
+Error bars show one standard deviation across the four seed blocks.
+
+dp_eps=2.000000 | theoretical_rdp_eps=0.188666 | nearly_tight_mean=0.055060 | nearly_tight_std=0.037422 | closed_mean=0.189473 | closed_std=0.025974
+dp_eps=4.380000 | theoretical_rdp_eps=0.750835 | nearly_tight_mean=0.361083 | nearly_tight_std=0.038942 | closed_mean=0.590345 | closed_std=0.157337
+dp_eps=6.570000 | theoretical_rdp_eps=1.498861 | nearly_tight_mean=0.909358 | nearly_tight_std=0.098299 | closed_mean=0.901840 | closed_std=0.380329
+dp_eps=10.000000 | theoretical_rdp_eps=3.001337 | nearly_tight_mean=1.953165 | nearly_tight_std=0.151281 | closed_mean=1.262143 | closed_std=0.760352
+dp_eps=17.850000 | theoretical_rdp_eps=7.495752 | nearly_tight_mean=5.209969 | nearly_tight_std=0.395133 | closed_mean=1.749174 | closed_std=1.447184

@@ -1,0 +1,10 @@
+MNIST | dataset_size/100samples | alpha=1.25
+============================================
+Bars show mean across seed blocks 5-9, 10-14, 15-19, and 20-24.
+Error bars show one standard deviation across the four seed blocks.
+
+dp_eps=2.000000 | theoretical_rdp_eps=0.157221 | nearly_tight_mean=0.086224 | nearly_tight_std=0.041880 | closed_mean=0.247746 | closed_std=0.061629
+dp_eps=4.380000 | theoretical_rdp_eps=0.625696 | nearly_tight_mean=0.506473 | nearly_tight_std=0.124044 | closed_mean=0.844741 | closed_std=0.106789
+dp_eps=6.570000 | theoretical_rdp_eps=1.249051 | nearly_tight_mean=0.874574 | nearly_tight_std=0.074801 | closed_mean=1.422400 | closed_std=0.058790
+dp_eps=10.000000 | theoretical_rdp_eps=2.501114 | nearly_tight_mean=1.921169 | nearly_tight_std=0.248838 | closed_mean=2.601070 | closed_std=0.207282
+dp_eps=17.850000 | theoretical_rdp_eps=6.246460 | nearly_tight_mean=4.684979 | nearly_tight_std=0.370124 | closed_mean=5.102550 | closed_std=1.082682
