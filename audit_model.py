@@ -14,7 +14,7 @@ import dill
 from models import Models
 from utils.data import load_data
 from utils.dpsgd import clip_and_accum_grads
-from utils.audit import compute_eps_lower_from_mia
+from utils.audit import compute_eps_lower_from_mia, compute_mu_lower_from_mia, compute_roc_from_mia
 from utils.clipbkd import craft_clipbkd, choose_worstcase_label
 
 def xavier_init_model(model):
@@ -279,14 +279,20 @@ if __name__ == '__main__':
         # calculate empirical epsilon using GDP
         mia_scores = np.concatenate([losses['in'], losses['out']])
         mia_labels = np.concatenate([np.ones_like(losses['in']), np.zeros_like(losses['out'])])
+        _, mia_fpr, mia_tpr, _ = compute_roc_from_mia(mia_scores, mia_labels)
+        _, emp_mu_gdp = compute_mu_lower_from_mia(mia_scores, mia_labels, args.alpha, n_procs=1)
         _, emp_eps_loss = compute_eps_lower_from_mia(mia_scores, mia_labels, args.alpha, args.delta, 'GDP', n_procs=1)
 
         np.save(f'{out_folder}/emp_eps_loss.npy', [emp_eps_loss])
+        np.save(f'{out_folder}/emp_mu_gdp.npy', [emp_mu_gdp])
         np.save(f'{out_folder}/mia_scores.npy', mia_scores)
         np.save(f'{out_folder}/mia_labels.npy', mia_labels)
+        np.save(f'{out_folder}/mia_fpr.npy', mia_fpr)
+        np.save(f'{out_folder}/mia_tpr.npy', mia_tpr)
     
         print(f'Theoretical eps: {args.epsilon}')
         print(f'Empirical eps: {emp_eps_loss}')
+        print(f'Empirical mu-GDP: {emp_mu_gdp}')
 
     print(f'Train set accuracy: {np.mean(train_set_accs) * 100:.3f}%')
     print(f'Test set accuracy: {np.mean(test_set_accs) * 100:.3f}%')

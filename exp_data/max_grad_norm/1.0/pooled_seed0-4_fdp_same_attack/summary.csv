@@ -1,0 +1,2 @@
+run_name,pooled_losses_in,pooled_losses_out,threshold_count,unique_c_count,tau,m,c,tp,fp,tn,fn,raw_tpr,raw_fpr,attack_acc,emp_noise,eps_rdp_alpha2,status
+mnist_half_cnn_eps6.57,500,500,1000,247,-3.1305766105651855,1000,746,350,104,396,150,0.7,0.208,0.746,2.2126375458486165,0.2042581738556534,ok

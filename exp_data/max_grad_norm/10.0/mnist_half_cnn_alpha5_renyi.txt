@@ -1,0 +1,8 @@
+MNIST | max_grad_norm/10.0 | alpha=5
+====================================
+
+dp_eps=2.000000 | theoretical_rdp_eps=0.628885 | dv_epochs=750 | dv_batch_size=400 | dv_lr=0.000100 | dv_ema_rate=1.000000 | nearly_tight_rdp_mean=0.003867 | dv_scaled_alpha=0.163375 | closed_scaled_alpha=0.451797
+dp_eps=4.380000 | theoretical_rdp_eps=2.502785 | dv_epochs=750 | dv_batch_size=400 | dv_lr=0.000100 | dv_ema_rate=1.000000 | nearly_tight_rdp_mean=0.062451 | dv_scaled_alpha=0.139631 | closed_scaled_alpha=1.854006
+dp_eps=6.570000 | theoretical_rdp_eps=4.996203 | dv_epochs=750 | dv_batch_size=400 | dv_lr=0.000100 | dv_ema_rate=1.000000 | nearly_tight_rdp_mean=0.251218 | dv_scaled_alpha=0.000000 | closed_scaled_alpha=1.313447
+dp_eps=10.000000 | theoretical_rdp_eps=10.004457 | dv_epochs=750 | dv_batch_size=400 | dv_lr=0.000100 | dv_ema_rate=1.000000 | nearly_tight_rdp_mean=0.198937 | dv_scaled_alpha=0.457938 | closed_scaled_alpha=2.004086
+dp_eps=17.850000 | theoretical_rdp_eps=24.985841 | dv_epochs=750 | dv_batch_size=400 | dv_lr=0.000100 | dv_ema_rate=1.000000 | nearly_tight_rdp_mean=0.337282 | dv_scaled_alpha=2.775166 | closed_scaled_alpha=8.845409

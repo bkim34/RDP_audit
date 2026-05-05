@@ -7,17 +7,21 @@ import concurrent.futures
 from tqdm import tqdm
 import math
 
-def compute_eps_lower_gdp(results, alpha, delta):
-    """Convert FPR and FNR to eps, delta using GDP at significance level alpha"""
-    # Step 1: calculate CP upper bound on FPR and FNR at significance level alpha
+def compute_mu_lower_gdp(results, alpha):
+    """Convert attack counts to a lower bound on mu-GDP at significance level alpha."""
     _, fpr_r = binomtest(int(results.FP), int(results.N)).proportion_ci(confidence_level=1 - 2 * alpha)
     _, fnr_r = binomtest(int(results.FN), int(results.P)).proportion_ci(confidence_level=1 - 2 * alpha)
 
-    # Step 2: calculate lower bound on mu-GDP
     mu_l = norm.ppf(1 - fpr_r) - norm.ppf(fnr_r)
+    if math.isnan(mu_l) or mu_l < 0:
+        return 0
 
-    if mu_l < 0:
-        # GDP is not defined for mu < 0
+    return mu_l
+
+def compute_eps_lower_gdp(results, alpha, delta):
+    """Convert FPR and FNR to eps, delta using GDP at significance level alpha"""
+    mu_l = compute_mu_lower_gdp(results, alpha)
+    if mu_l <= 0:
         return 0
 
     try:
@@ -57,23 +61,37 @@ def compute_eps_lower_single(results, alpha, delta, method='all'):
 
     return max_eps_lo
 
+def compute_roc_from_mia(scores, labels):
+    """Compute threshold-wise FPR and TPR for membership inference scores."""
+    scores, labels = np.array(scores), np.array(labels)
+    threshs = np.sort(np.unique(scores))
+
+    positives = labels == 1
+    negatives = labels == 0
+    n_pos = np.sum(positives)
+    n_neg = np.sum(negatives)
+
+    fprs = []
+    tprs = []
+    resultss = []
+    for t in threshs:
+        tp = np.sum(scores[positives] >= t)
+        fp = np.sum(scores[negatives] >= t)
+        fn = np.sum(scores[positives] < t)
+        tn = np.sum(scores[negatives] < t)
+
+        resultss.append((t, AttackResults(FN=fn, FP=fp, TN=tn, TP=tp)))
+        fprs.append(fp / n_neg if n_neg > 0 else 0.0)
+        tprs.append(tp / n_pos if n_pos > 0 else 0.0)
+
+    return threshs, np.array(fprs), np.array(tprs), resultss
+
 def compute_eps_lower_from_mia(scores, labels, alpha, delta, method='all', n_procs=32):
     """Compute lower bound for epsilon using privacy estimation procedure
     Step 1: For each threshold, calculate TP, FP, TN, FN and estimate epsilon lower bound using different methods at a given significance level alpha and delta
     Step 2: Output the maximum epsilon lower bound 
     """
-    scores, labels = np.array(scores), np.array(labels)
-    threshs = np.sort(np.unique(scores))
-
-    resultss = []
-    for t in threshs:
-        tp = np.sum(scores[labels == 1] >= t)
-        fp = np.sum(scores[labels == 0] >= t)
-        fn = np.sum(scores[labels == 1] < t)
-        tn = np.sum(scores[labels == 0] < t)
-
-        results = AttackResults(FN=fn, FP=fp, TN=tn, TP=tp)
-        resultss.append((t, results))
+    threshs, _, _, resultss = compute_roc_from_mia(scores, labels)
     
     with concurrent.futures.ProcessPoolExecutor(max_workers=n_procs) as executor, \
          tqdm(total=len(resultss), leave=False) as pbar:
@@ -92,6 +110,28 @@ def compute_eps_lower_from_mia(scores, labels, alpha, delta, method='all', n_pro
             pbar.update(1)
     
     return max_t, max_eps_lo
+
+def compute_mu_lower_from_mia(scores, labels, alpha, n_procs=32):
+    """Compute a lower bound for mu-GDP from MIA scores by sweeping thresholds."""
+    threshs, _, _, resultss = compute_roc_from_mia(scores, labels)
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=n_procs) as executor, \
+         tqdm(total=len(resultss), leave=False) as pbar:
+
+        futures = {}
+        for (t, curr_results) in resultss:
+            futures[executor.submit(compute_mu_lower_gdp, curr_results, alpha)] = t
+
+        max_mu_lo, max_t = None, None
+        for future in concurrent.futures.as_completed(futures):
+            curr_max_mu_lo = future.result()
+            t = futures[future]
+            if not math.isnan(curr_max_mu_lo) and (max_mu_lo is None or curr_max_mu_lo > max_mu_lo):
+                max_mu_lo = curr_max_mu_lo
+                max_t = t
+            pbar.update(1)
+
+    return max_t, max_mu_lo
 
 def estimate_eps(scoress, alpha=0.1, delta=0, method='all', n_procs=32):
     """Choose optimal threshold on the entire test set (e.g., GDP where choosing threshold doesn't matter)"""

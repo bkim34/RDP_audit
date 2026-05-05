@@ -1,7 +1,7 @@
 
-for EPS in 2.0 4.38 6.57 10.0 17.85
+for EPS in 17.85
 do
-    for SEED in 15 16 17 18 19 20 21 22 23 24
+    for SEED in 1 2
     do
         for MAX_GRAD_NORM in 1.0
         do

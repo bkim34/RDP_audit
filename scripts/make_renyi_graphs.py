@@ -35,11 +35,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--alphas", nargs="+", type=float, default=[3.0, 5.0])
     parser.add_argument("--seeds", nargs="+", type=int, default=[5, 6, 7, 8, 9])
     parser.add_argument("--delta", type=float, default=1e-5)
-    parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch-size", type=int, default=5000)
+    parser.add_argument("--epochs-cifar", type=int, default=250)
+    parser.add_argument("--epochs-mnist", type=int, default=750)
+    parser.add_argument("--batch-size", type=int, default=400)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--hidden", type=int, default=100)
-    parser.add_argument("--ema-rate", type=float, default=0.25)
+    parser.add_argument("--ema-rate", type=float, default=1.0)
     parser.add_argument("--train-split", type=float, default=0.8)
     parser.add_argument("--training-seed", type=int, default=0)
     parser.add_argument("--device", type=str, default="auto")
@@ -164,6 +165,14 @@ def format_tick_label(value: float) -> str:
     return f"{value:.3f}".rstrip("0").rstrip(".")
 
 
+def dv_epochs_for_dataset(dataset_prefix: str, args: argparse.Namespace) -> int:
+    if dataset_prefix.startswith("cifar10"):
+        return args.epochs_cifar
+    if dataset_prefix.startswith("mnist"):
+        return args.epochs_mnist
+    return args.epochs_cifar
+
+
 def build_rows(
     group_root: Path,
     dataset_prefix: str,
@@ -175,6 +184,7 @@ def build_rows(
     args: argparse.Namespace,
 ) -> list[dict[str, float | str]]:
     rows = []
+    dv_epochs = dv_epochs_for_dataset(dataset_prefix, args)
 
     for eps_index, eps_value in enumerate(eps_values):
         print(f"{group_root} | {dataset_prefix} | alpha={alpha:g} | eps={eps_value}")
@@ -192,7 +202,7 @@ def build_rows(
             test_loader=test_loader,
             device=device,
             lr=args.lr,
-            epochs=args.epochs,
+            epochs=dv_epochs,
             hidden=args.hidden,
             renyi_order=alpha,
             ema_rate=args.ema_rate,
@@ -205,7 +215,7 @@ def build_rows(
             test_loader=rev_test_loader,
             device=device,
             lr=args.lr,
-            epochs=args.epochs,
+            epochs=dv_epochs,
             hidden=args.hidden,
             renyi_order=alpha,
             ema_rate=args.ema_rate,
@@ -231,6 +241,10 @@ def build_rows(
                 "theoretical_rdp_eps": theoretical_rdp_eps,
                 "losses_in_count": int(losses_in.shape[0]),
                 "losses_out_count": int(losses_out.shape[0]),
+                "dv_epochs": dv_epochs,
+                "dv_batch_size": args.batch_size,
+                "dv_lr": args.lr,
+                "dv_ema_rate": args.ema_rate,
                 "nearly_tight_dp_mean": nearly_tight_dp_mean,
                 "nearly_tight_rdp_mean": nearly_tight_rdp_mean,
                 "dv_qp_raw": dv_qp,
@@ -270,6 +284,7 @@ def save_txt(txt_path: Path, rows: list[dict[str, float | str]], title: str) -> 
         for row in rows:
             f.write(
                 "dp_eps={dp_eps:.6f} | theoretical_rdp_eps={theoretical_rdp_eps:.6f} | "
+                "dv_epochs={dv_epochs} | dv_batch_size={dv_batch_size} | dv_lr={dv_lr:.6f} | dv_ema_rate={dv_ema_rate:.6f} | "
                 "nearly_tight_rdp_mean={nearly_tight_rdp_mean:.6f} | "
                 "dv_scaled_alpha={dv_scaled_alpha:.6f} | "
                 "closed_scaled_alpha={closed_scaled_alpha:.6f}\n".format(**row)
@@ -287,7 +302,15 @@ def plot_rows(plot_path: Path, rows: list[dict[str, float | str]], title: str, a
     width = 0.22
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(x, theoretical, color="red", linestyle="--", linewidth=1.5, label="Theoretical $\\varepsilon_\\alpha$")
+    ax.hlines(
+        theoretical,
+        x - 1.5 * width,
+        x + 1.5 * width,
+        colors="red",
+        linestyles="--",
+        linewidth=1.5,
+        label="Theoretical $\\varepsilon_\\alpha$",
+    )
     ax.bar(x - width, nearly_tight, width=width, color="#f6c54e", label="Nearly Tight Black-Box Auditing")
     ax.bar(x, dv, width=width, color="#2d7db6", label="DV Renyi Estimate")
     ax.bar(x + width, closed, width=width, color="#2ca02c", label="Closed Form Renyi")
